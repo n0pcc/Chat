@@ -32,6 +32,16 @@ ENTRYPOINT ["/usr/bin/socat", "-t5", "-T60", "tcp-listen:1337,max-children=50,re
 
 # Solution
 ```
+$ checksec chat
+[*] '/misc/projects/Chat/chat'
+    Arch:     i386-32-little
+    RELRO:    Partial RELRO
+    Stack:    Canary found
+    NX:       NX enabled
+    PIE:      No PIE (0x8048000)
+```
+
+```
 $ ./chat
 Command Channel:
 > /h
