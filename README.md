@@ -32,7 +32,7 @@ ENTRYPOINT ["/usr/bin/socat", "-t5", "-T60", "tcp-listen:1337,max-children=50,re
 
 # Solution
 ```
-./chat
+$ ./chat
 Command Channel:
 > /h
 Command Commands:
